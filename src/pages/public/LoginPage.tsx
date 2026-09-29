@@ -492,7 +492,7 @@ export const LoginPage: React.FC = () => {
                 >
                   <span>{loading
                     ? "Verifying Credentials & Sending OTP..."
-                    : `Continue to Sign In as ${role === "trainee" ? "Trainee" : role === "trainer" ? "Trainer" : "Administrator"} (2FA)`
+                    : `Continue to Sign In as ${role === "trainee" ? "Trainee" : role === "trainer" ? "Trainer" : "Administrator"}`
                   }</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
