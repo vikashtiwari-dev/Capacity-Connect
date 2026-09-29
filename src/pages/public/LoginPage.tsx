@@ -110,7 +110,28 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      // ── Strict Security: Two-Factor OTP required for ALL users (Trainee, Trainer, Admin) ──
+      // For Trainee: Instant direct login (No OTP required at login; OTP was verified at registration)
+      if (res.user.role === "trainee" || role === "trainee") {
+        completeLogin(res.user);
+
+        sendLoginAlertEmail({
+          email: res.user.email,
+          name: res.user.name,
+          role: "TRAINEE"
+        }).catch(() => {});
+
+        setLoading(false);
+        addToast({
+          title: "Sign In Successful",
+          message: "Authenticated as Trainee.",
+          type: "success"
+        });
+        const targetPath = (location.state as any)?.from?.pathname || searchParams.get("redirect") || "/trainee/dashboard";
+        navigate(targetPath);
+        return;
+      }
+
+      // For Faculty (Trainer) & Administrator: 2FA OTP verification is REQUIRED EVERY TIME
       setPendingUser(res.user);
 
       // Generate cryptographically random 6-digit OTP
@@ -491,8 +512,8 @@ export const LoginPage: React.FC = () => {
                   className="apple-btn-primary w-full py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>{loading
-                    ? "Verifying Credentials & Sending OTP..."
-                    : `Continue to Sign In as ${role === "trainee" ? "Trainee" : role === "trainer" ? "Trainer" : "Administrator"}`
+                    ? (role === "trainee" ? "Signing In..." : "Verifying Credentials & Sending OTP...")
+                    : (role === "trainee" ? "Sign In as Trainee" : `Continue to Sign In as ${role === "trainer" ? "Trainer" : "Administrator"}`)
                   }</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
