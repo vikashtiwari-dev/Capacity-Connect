@@ -33,63 +33,6 @@ export const initialLeaderboard: LeaderboardEntry[] = [
 
 export const initialUsers: User[] = [
   {
-    id: "u-admin-demo",
-    name: "Platform Administrator (Demo)",
-    email: "admin@capacityconnect.org",
-    password: "$2b$10$kgHviWImLKaWWZ402SUlVOJQIPOmbJU9pln7CretSDCraBb2LDgui",
-    role: "admin",
-    status: "active",
-    createdAt: "2026-09-01T08:00:00Z"
-  },
-  {
-    id: "u-trainer-demo",
-    name: "Dr. Rajesh Sen (Demo Faculty)",
-    email: "trainer@capacityconnect.org",
-    password: "$2b$10$kgHviWImLKaWWZ402SUlVOJQIPOmbJU9pln7CretSDCraBb2LDgui",
-    role: "trainer",
-    status: "active",
-    isVerifiedByAdmin: true,
-    createdAt: "2026-09-01T08:00:00Z",
-    trainerProfile: {
-      bio: "Senior Technical Educator specializing in Full-Stack Systems, Cloud Infrastructure, and Computer Science.",
-      expertise: ["Full-Stack Architecture", "Cloud Systems", "Database Design"],
-      competencies: ["Curriculum Authoring", "Mentorship", "Hands-on Projects"],
-      phone: "+91 98765 11111",
-      department: "Computer Science & Engineering",
-      designation: "Senior Technical Faculty",
-      experience: "10+ Years Experience",
-      rating: 4.96,
-      totalStudentsTaught: 30000,
-      verifiedCredentials: ["Senior Technical Faculty", "Verified LMS Instructor"],
-      isVerifiedByAdmin: true
-    }
-  },
-  {
-    id: "u-trainee-demo",
-    name: "Rahul Sharma (Demo Trainee)",
-    email: "trainee@capacityconnect.org",
-    password: "$2b$10$kgHviWImLKaWWZ402SUlVOJQIPOmbJU9pln7CretSDCraBb2LDgui",
-    role: "trainee",
-    status: "active",
-    createdAt: "2026-09-01T08:00:00Z",
-    traineeProfile: {
-      bio: "Dedicated Engineering scholar actively acquiring advanced competencies on Capacity Connect.",
-      phone: "+91 98765 00000",
-      department: "Computer Science & Engineering",
-      designation: "Undergraduate Student",
-      qualifications: ["B.Tech Computer Science (In Progress)"],
-      experience: ["Student Scholar"],
-      skills: ["Full-Stack Web Development", "Data Structures & Algorithms"],
-      interests: ["Cloud Systems", "Full-Stack Web Development"],
-      certificates: [],
-      xpPoints: 1450,
-      streakDays: 5,
-      completedCoursesCount: 1,
-      badges: [],
-      enrolledCourses: ["c6", "c-dsa"]
-    }
-  },
-  {
     id: "u-admin-official",
     name: "Capacity Connect Admin",
     email: "vkt052005@gmail.com",
@@ -929,7 +872,7 @@ export const initialAssessments: Assessment[] = [
     description: "Proctored competency evaluation covering HTML5 semantics, CSS Flexbox/Grid, JavaScript asynchronous logic, REST APIs, and React component state.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 20,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "CodeWithHarry (Haris Khan)",
     createdAt: "2026-02-15T12:00:00Z",
     questions: [
@@ -1018,7 +961,7 @@ export const initialAssessments: Assessment[] = [
     description: "Comprehensive proctored assessment testing core algorithmic principles: asymptotic analysis, binary search, dynamic programming, monotonic stacks, and graph algorithms.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 30,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Raj Vikramaditya (Striver)",
     createdAt: "2026-03-01T10:00:00Z",
     questions: [
@@ -1107,7 +1050,7 @@ export const initialAssessments: Assessment[] = [
     description: "Proctored Harvard CS50 curriculum examination covering SQL querying, joins, schema normalization, indexing, and ACID transactions.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 25,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Carter Zenke (Harvard University)",
     createdAt: "2026-03-02T10:00:00Z",
     questions: [
@@ -1196,7 +1139,7 @@ export const initialAssessments: Assessment[] = [
     description: "Proctored examination covering pointers, dynamic memory allocation, structs, recursion, and file input/output in C.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 20,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "CodeWithHarry (Haris Khan)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
@@ -1285,7 +1228,7 @@ export const initialAssessments: Assessment[] = [
     description: "Evaluates comprehensive Python programming capabilities: list comprehensions, OOP principles, decorators, generators, and exception handling.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 20,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "CodeWithHarry (Haris Khan)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
@@ -1374,7 +1317,7 @@ export const initialAssessments: Assessment[] = [
     description: "Evaluates proficiency in C++ STL (vector, map, priority_queue), recursion, linked list operations, binary trees, and backtracking.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 25,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Shradha Khapra (Apna College)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
@@ -1463,7 +1406,7 @@ export const initialAssessments: Assessment[] = [
     description: "Proctored academic assessment evaluating relational algebra, Boyce-Codd Normal Form (BCNF), serializability, and 2-Phase Locking (2PL).",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 25,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Neso Academy",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
@@ -1552,7 +1495,7 @@ export const initialAssessments: Assessment[] = [
     description: "Proctored exam covering IPv4 subnetting, TCP flow control, Hamming codes, routing algorithms, and OSI reference model.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 25,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Varun Singla (Gate Smashers)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
@@ -1641,7 +1584,7 @@ export const initialAssessments: Assessment[] = [
     description: "Evaluates asymptotic analysis, recurrence solutions via Master Theorem, greedy proof techniques, and NP-completeness reductions.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 25,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Sanchit Jain (KnowledgeGATE)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [
@@ -1730,7 +1673,7 @@ export const initialAssessments: Assessment[] = [
     description: "Proctored academic evaluation based on Prof. Rajib Mall's IIT Kharagpur curriculum: SDLC models, SRS standards, UML modeling, cyclomatic complexity, and software testing.",
     deadline: "2026-12-31T23:59:59Z",
     durationMinutes: 25,
-    passingScore: 70,
+    passingScore: 40,
     createdBy: "Prof. Rajib Mall (IIT Kharagpur)",
     createdAt: "2026-03-03T10:00:00Z",
     questions: [

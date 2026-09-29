@@ -106,6 +106,19 @@ function getInitialAuthUser(): User | null {
     }
 
     if (parsed?.user && parsed.user.name && parsed.user.role) {
+      const email = (parsed.user.email || "").toLowerCase();
+      const id = (parsed.user.id || "").toLowerCase();
+      if (
+        email.endsWith("@capacityconnect.org") ||
+        email.includes("demo") ||
+        id.includes("demo") ||
+        id === "u-admin-demo" ||
+        id === "u-trainer-demo" ||
+        id === "u-trainee-demo"
+      ) {
+        localStorage.removeItem(STORAGE_KEYS.AUTH);
+        return null;
+      }
       if (parsed.user.status === "removed") {
         localStorage.removeItem(STORAGE_KEYS.AUTH);
         return null;
@@ -229,6 +242,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Strict security check: reject trial/demo accounts immediately
+    if (
+      cleanEmail.endsWith("@capacityconnect.org") ||
+      cleanEmail.includes("demo") ||
+      cleanEmail === "admin@capacityconnect.org" ||
+      cleanEmail === "trainer@capacityconnect.org" ||
+      cleanEmail === "trainee@capacityconnect.org"
+    ) {
+      return {
+        success: false,
+        message: "Trial and demo accounts have been permanently purged. Please sign in with your official account or register."
+      };
+    }
+
     let user: User | null = null;
 
     // 1. Check direct from Supabase Cloud
@@ -371,6 +399,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    if (
+      cleanEmail.endsWith("@capacityconnect.org") ||
+      cleanEmail.includes("demo") ||
+      cleanEmail === "admin@capacityconnect.org" ||
+      cleanEmail === "trainer@capacityconnect.org" ||
+      cleanEmail === "trainee@capacityconnect.org"
+    ) {
+      return {
+        success: false,
+        message: "Trial and demo accounts have been permanently purged. Please sign in with your official account or register."
+      };
+    }
+
     const users = useUsersStore.getState().users;
     const user = users.find((u) => {
       const uEmail = u.email?.toLowerCase() || "";

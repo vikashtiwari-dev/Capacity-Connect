@@ -183,7 +183,7 @@ export const AdaptiveVideoPlayer: React.FC<AdaptiveVideoPlayerProps> = ({
                 }}
                 className="apple-btn-primary text-xs px-4 py-2 font-semibold mx-auto flex items-center gap-1.5 cursor-pointer"
               >
-                <Play className="w-3.5 h-3.5 fill-white" /> Stream Cloud Demo Video
+                <Play className="w-3.5 h-3.5 fill-white" /> Stream Sample Video
               </button>
             </div>
           ) : (

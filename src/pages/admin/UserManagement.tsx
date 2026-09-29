@@ -16,7 +16,6 @@ import { sendApprovalEmail } from "../../services/emailService";
 import { PasswordStrengthMeter, checkPasswordStrength } from "../../components/auth/PasswordStrengthMeter";
 import bcrypt from "bcryptjs";
 import { dbService } from "../../services/db";
-import { isDemoAccount } from "../../utils/demoMode";
 import type { User } from "../../types";
 
 const TRAINER_DEPARTMENT_OPTIONS = [
@@ -279,15 +278,6 @@ export const UserManagement: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!userToDelete) return;
-    if (isDemoAccount(currentUser)) {
-      addToast({
-        title: "Sandbox Evaluation Mode",
-        message: "User removal is disabled on demo accounts to prevent tampering with live platform users.",
-        type: "warning"
-      });
-      setUserToDelete(null);
-      return;
-    }
     if (userToDelete.id === "u-admin-official" || userToDelete.email?.toLowerCase() === "vkt052005@gmail.com") {
       addToast({
         title: "Action Restricted",
@@ -312,14 +302,6 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleAllowAccess = async (targetUser: User) => {
-    if (isDemoAccount(currentUser)) {
-      addToast({
-        title: "Sandbox Evaluation Mode",
-        message: "Re-admission approvals are locked on demo accounts.",
-        type: "warning"
-      });
-      return;
-    }
     await allowUserAccess(targetUser.id);
     addToast({
       title: "User Access Allowed & Restored",
@@ -330,15 +312,6 @@ export const UserManagement: React.FC = () => {
 
   const handleConfirmPermanentDelete = async () => {
     if (!userToPermanentDelete) return;
-    if (isDemoAccount(currentUser)) {
-      addToast({
-        title: "Sandbox Evaluation Mode",
-        message: "Permanent user deletion is disabled on demo accounts.",
-        type: "warning"
-      });
-      setUserToPermanentDelete(null);
-      return;
-    }
     if (userToPermanentDelete.id === "u-admin-official" || userToPermanentDelete.email?.toLowerCase() === "vkt052005@gmail.com") {
       addToast({
         title: "Action Restricted",
@@ -363,15 +336,6 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleConfirmPurgeAll = async () => {
-    if (isDemoAccount(currentUser)) {
-      addToast({
-        title: "Sandbox Evaluation Mode",
-        message: "Bulk user purge is disabled on demo accounts.",
-        type: "warning"
-      });
-      setPurgeAllModalOpen(false);
-      return;
-    }
     setIsPurging(true);
     try {
       const count = await purgeRevokedUsers();
@@ -394,15 +358,6 @@ export const UserManagement: React.FC = () => {
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isDemoAccount(currentUser)) {
-      addToast({
-        title: "Sandbox Evaluation Mode",
-        message: "Creating new cloud accounts is disabled on demo accounts.",
-        type: "warning"
-      });
-      setCreateModalOpen(false);
-      return;
-    }
     if (!newUserName.trim() || !newUserEmail.trim()) {
       addToast({
         title: "Missing Information",
@@ -529,19 +484,6 @@ export const UserManagement: React.FC = () => {
       ]}
     >
       <div className="space-y-6">
-        {/* Sandbox Evaluation Mode Banner */}
-        {isDemoAccount(currentUser) && (
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center gap-3 shadow-lg animate-fadeIn">
-            <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
-            <div className="space-y-0.5">
-              <p className="font-bold text-amber-300">Sandbox Evaluation Mode (User Records Protected)</p>
-              <p className="text-[11px] text-amber-200/80 leading-relaxed">
-                You are authenticated as <strong>Demo Administrator</strong>. To prevent accidental disruption to live website users, user removal, account deletion, role promotions/demotions, and suspensions are restricted to read-only simulation.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Metric Cards (Clickable Quick Filters) */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <button
@@ -695,17 +637,7 @@ export const UserManagement: React.FC = () => {
 
           <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             <button
-              onClick={() => {
-                if (isDemoAccount(currentUser)) {
-                  addToast({
-                    title: "Sandbox Evaluation Mode",
-                    message: "User provisioning is disabled on demo accounts to prevent tampering.",
-                    type: "warning"
-                  });
-                  return;
-                }
-                setCreateModalOpen(true);
-              }}
+              onClick={() => setCreateModalOpen(true)}
               className="apple-btn-primary text-xs px-3.5 py-1.5 font-semibold flex items-center gap-1.5 cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -792,10 +724,6 @@ export const UserManagement: React.FC = () => {
                       <td className="py-3 px-3">
                         {isProtectedAdmin ? (
                           <span className="badge-purple text-[9px] uppercase font-bold">Admin</span>
-                        ) : isDemoAccount(currentUser) ? (
-                          <span className="text-[10px] font-semibold text-slate-300 capitalize px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono">
-                            {u.role}
-                          </span>
                         ) : (
                           <select
                             value={u.role}
@@ -963,7 +891,7 @@ export const UserManagement: React.FC = () => {
                               )}
 
                               {/* Suspend / Activate toggle */}
-                              {!isProtectedAdmin && !isDemoAccount(currentUser) && (
+                              {!isProtectedAdmin && (
                                 <>
                                   {u.status === "active" ? (
                                     <button
@@ -1000,9 +928,9 @@ export const UserManagement: React.FC = () => {
                               )}
 
                               {/* Remove / Delete User Button */}
-                              {isProtectedAdmin || isDemoAccount(currentUser) ? (
+                              {isProtectedAdmin ? (
                                 <span className="text-[9.5px] text-slate-500 font-mono italic px-2">
-                                  {isProtectedAdmin ? "Protected" : "Read-Only (Demo)"}
+                                  Protected
                                 </span>
                               ) : (
                                 <button

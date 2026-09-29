@@ -81,7 +81,7 @@ export const HomePage: React.FC = () => {
     },
     {
       q: "How does the portal handle assessments, deadlines, and certifications?",
-      a: "Trainers create subject-wise MCQ evaluations with strict submission deadlines and passing thresholds (e.g. 70%). Trainees complete these tests within an anti-cheat proctored environment. Achieving a passing score automatically issues an instant, cryptographically verifiable digital certificate complete with a QR code and ledger record."
+      a: "Trainers create subject-wise MCQ evaluations with strict submission deadlines and passing thresholds (e.g. 40%). Trainees complete these tests within an anti-cheat proctored environment. Achieving a passing score automatically issues an instant, cryptographically verifiable digital certificate complete with a QR code and ledger record."
     },
     {
       q: "How does Competency Mapping work on CAPACITY CONNECT?",

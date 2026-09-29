@@ -33,7 +33,7 @@ export const useAssessmentsStore = create<AssessmentsState>((set, get) => {
             answers: r.answers || [],
             totalPoints: r.totalPoints || 100,
             percentage: r.percentage ?? r.score ?? 0,
-            passed: r.passed ?? ((r.score ?? 0) >= 70),
+            passed: r.passed ?? ((r.score ?? 0) >= 40),
             timeTakenSeconds: r.timeTakenSeconds || 0
           }));
         }).catch(() => [])

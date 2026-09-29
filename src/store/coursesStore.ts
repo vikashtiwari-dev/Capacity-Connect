@@ -6,7 +6,7 @@ import { deleteVideoBlob } from "../utils/videoStorage";
 import { useUsersStore } from "./usersStore";
 import { useAuthStore } from "./authStore";
 import { recordAuditEvent } from "./auditStore";
-import { isDemoAccount, isProtectedProductionCourse, isRealAdmin } from "../utils/demoMode";
+import { isProtectedProductionCourse, isRealAdmin } from "../utils/demoMode";
 
 interface CoursesState {
   courses: Course[];
@@ -594,9 +594,9 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       return;
     }
 
-    // If created by a demo account (or any non-real-admin), strictly enforce pending_approval
+    // If not a verified platform administrator, course requires moderation queue approval
     let sanitizedCourse = { ...course };
-    if (isDemoAccount(currentUser) || !isRealAdmin(currentUser)) {
+    if (!isRealAdmin(currentUser)) {
       sanitizedCourse.status = "pending_approval";
     }
 
@@ -610,15 +610,10 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const targetCourse = courses.find((c) => c.id === courseId);
     const currentUser = useAuthStore.getState().currentUser;
 
-    if (isDemoAccount(currentUser) && isProtectedProductionCourse(targetCourse)) {
-      console.warn("[DemoSandbox] Cloud update of production course blocked for demo session:", courseId);
-      return;
-    }
-
     // CRITICAL: Only REAL ADMIN (e.g. vkt052005@gmail.com) can verify & approve courses into active state
     if (updates.status === "active" && targetCourse?.status === "pending_approval") {
-      if (isDemoAccount(currentUser) || !isRealAdmin(currentUser)) {
-        console.warn("[DemoSandbox] Verification & approval restricted to Real Admin. Blocked for:", currentUser?.email);
+      if (!isRealAdmin(currentUser)) {
+        console.warn("[AdminAuth] Verification & approval restricted to Real Admin. Blocked for:", currentUser?.email);
         return;
       }
     }
@@ -633,12 +628,9 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
     const courseToDelete = courses.find((c) => c.id === courseId);
     const currentUser = useAuthStore.getState().currentUser;
 
-    if (isDemoAccount(currentUser)) {
-      // Demo accounts cannot delete production courses OR pending courses awaiting real admin review
-      if (isProtectedProductionCourse(courseToDelete) || courseToDelete?.status === "pending_approval") {
-        console.warn("[DemoSandbox] Deletion blocked for demo session:", courseId);
-        return;
-      }
+    if (isProtectedProductionCourse(courseToDelete)) {
+      console.warn("[Protected] Production course deletion blocked:", courseId);
+      return;
     }
 
     // 1. Remove course from state

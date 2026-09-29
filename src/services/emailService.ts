@@ -45,15 +45,6 @@ export async function sendOtpEmail({ email, name, otp, purpose = 'register' }: S
     }
   }
 
-  // Support demo showcase accounts without external SMTP dispatch requirement
-  if (normEmail.endsWith('@capacityconnect.org') || normEmail.includes('demo')) {
-    return {
-      success: true,
-      message: 'Demo verification active. Use universal evaluation code 123456 to continue.',
-      provider: 'capacity-connect-smtp'
-    };
-  }
-
   // Dispatch Real Official OTP via backend server (capacityconnect.org@gmail.com)
   try {
     const res = await fetch('/api/send-otp', {
@@ -107,12 +98,6 @@ export async function verifyOtpCode(
       valid: false,
       error: 'Please enter a valid 6-digit verification code.'
     };
-  }
-
-  // Universal evaluation bypass for portfolio/demo reviewers and judges
-  if (token === '123456') {
-    delete localOtpSessions[normEmail];
-    return { valid: true };
   }
 
   // 1. Primary: Verify against active cryptographic session hash in memory

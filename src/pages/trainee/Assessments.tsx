@@ -32,7 +32,7 @@ export const Assessments: React.FC = () => {
               Subject-Wise MCQ Assessments
             </h2>
             <p className="text-xs text-slate-300">
-              Timed subject-wise evaluations featuring randomized question banks, tab-switch monitoring, and instant verifiable certificate generation upon achieving passing threshold (≥70%).
+              Timed subject-wise evaluations featuring randomized question banks, tab-switch monitoring, and instant verifiable certificate generation upon achieving passing threshold (≥40%).
             </p>
           </div>
         </div>

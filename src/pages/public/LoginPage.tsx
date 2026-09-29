@@ -84,24 +84,6 @@ export const LoginPage: React.FC = () => {
     setStep("credentials");
   };
 
-  const handleFillDemo = (demoRole: "trainee" | "trainer" | "admin") => {
-    const demoEmails = {
-      trainee: "trainee@capacityconnect.org",
-      trainer: "trainer@capacityconnect.org",
-      admin: "admin@capacityconnect.org"
-    };
-    setRole(demoRole);
-    setEmail(demoEmails[demoRole]);
-    setPassword("Demo@123");
-    setCaptchaVerified(true);
-    setError("");
-    addToast({
-      title: "Demo Credentials Applied",
-      message: `${demoRole.toUpperCase()} dummy account loaded (Demo@123). Click Sign In!`,
-      type: "info"
-    });
-  };
-
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -128,31 +110,10 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      // For Student (trainee) — direct login without OTP
-      if (role === "trainee") {
-        completeLogin(res.user);
-
-        sendLoginAlertEmail({
-          email: res.user.email,
-          name: res.user.name,
-          role: "TRAINEE"
-        }).catch(() => {});
-
-        setLoading(false);
-        addToast({
-          title: "Sign In Successful",
-          message: "Authenticated as TRAINEE.",
-          type: "success"
-        });
-        const targetPath = (location.state as any)?.from?.pathname || searchParams.get("redirect") || "/trainee/dashboard";
-        navigate(targetPath);
-        return;
-      }
-
-      // For Trainer & Admin — require 2FA OTP verification
+      // ── Strict Security: Two-Factor OTP required for ALL users (Trainee, Trainer, Admin) ──
       setPendingUser(res.user);
 
-      // Generate secure 6-digit OTP
+      // Generate cryptographically random 6-digit OTP
       const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(randomOtp);
 
@@ -404,45 +365,6 @@ export const LoginPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* ⚡ Quick Demo Access for Evaluators & Showcase */}
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-950/40 via-indigo-950/20 to-slate-900/60 border border-blue-500/25 space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-blue-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Demo Accounts (1-Click Fill)</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                    Key: <strong className="text-white font-mono">Demo@123</strong>
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemo("trainee")}
-                    className={"py-1.5 px-2 rounded-xl text-xs font-medium border transition flex items-center justify-center gap-1 cursor-pointer " + (role === "trainee" && email === "trainee@capacityconnect.org" ? "bg-blue-600/30 border-blue-400 text-white" : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white")}
-                  >
-                    <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Trainee</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemo("trainer")}
-                    className={"py-1.5 px-2 rounded-xl text-xs font-medium border transition flex items-center justify-center gap-1 cursor-pointer " + (role === "trainer" && email === "trainer@capacityconnect.org" ? "bg-indigo-600/30 border-indigo-400 text-white" : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white")}
-                  >
-                    <Users className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Faculty</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemo("admin")}
-                    className={"py-1.5 px-2 rounded-xl text-xs font-medium border transition flex items-center justify-center gap-1 cursor-pointer " + (role === "admin" && email === "admin@capacityconnect.org" ? "bg-purple-600/30 border-purple-400 text-white" : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white")}
-                  >
-                    <Shield className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Admin</span>
-                  </button>
-                </div>
-              </div>
-
               <form onSubmit={handleCredentialsSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">Official Email</label>
@@ -569,10 +491,8 @@ export const LoginPage: React.FC = () => {
                   className="apple-btn-primary w-full py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>{loading
-                    ? (role === "trainee" ? "Signing In..." : "Verifying Credentials & Sending OTP...")
-                    : (role === "trainee"
-                      ? "Sign In as Trainee"
-                      : "Continue to Sign In as " + (role === "trainer" ? "Trainer" : "Administrator"))
+                    ? "Verifying Credentials & Sending OTP..."
+                    : `Continue to Sign In as ${role === "trainee" ? "Trainee" : role === "trainer" ? "Trainer" : "Administrator"} (2FA)`
                   }</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -593,28 +513,6 @@ export const LoginPage: React.FC = () => {
                 </div>
                 <p className="text-[11px] text-slate-400">
                   Dispatched via official Capacity Connect mailer (<span className="text-slate-300">capacityconnect.org@gmail.com</span>)
-                </p>
-              </div>
-
-              {/* Demo / Reviewer Evaluation OTP Quick Fill */}
-              <div className="p-3 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-blue-500/30 text-center space-y-1.5">
-                <div className="flex items-center justify-center gap-2 text-xs text-blue-300 font-semibold">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>Reviewer Evaluation Code:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtpDigits(["1", "2", "3", "4", "5", "6"]);
-                      addToast({ title: "Evaluation Code Applied", message: "OTP 123456 auto-filled. Click Verify to proceed!", type: "info" });
-                    }}
-                    className="px-2.5 py-0.5 rounded-lg bg-blue-500/30 hover:bg-blue-500/50 text-blue-100 border border-blue-400/50 font-mono font-bold tracking-widest text-xs transition cursor-pointer"
-                    title="Click to auto-fill 123456"
-                  >
-                    123456
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  Judges &amp; recruiters can use <strong className="text-blue-300">123456</strong> for instant sign-in without inbox access.
                 </p>
               </div>
 

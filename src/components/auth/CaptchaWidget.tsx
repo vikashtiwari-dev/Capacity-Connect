@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAppStore } from "../../store/appStore";
-import { RotateCw, Volume2, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
+import { RotateCw, Volume2, VolumeX, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
 
 interface CaptchaWidgetProps {
   onVerify: (verified: boolean) => void;
@@ -12,9 +12,14 @@ export const CaptchaWidget: React.FC<CaptchaWidgetProps> = ({ onVerify }) => {
   const [userInput, setUserInput] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const generateCode = () => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
     let code = "";
     for (let i = 0; i < 5; i++) {
@@ -80,6 +85,11 @@ export const CaptchaWidget: React.FC<CaptchaWidgetProps> = ({ onVerify }) => {
 
   useEffect(() => {
     generateCode();
+    return () => {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -107,13 +117,51 @@ export const CaptchaWidget: React.FC<CaptchaWidgetProps> = ({ onVerify }) => {
     }
   };
 
+  const formatCaptchaForSpeech = (code: string): string => {
+    return code
+      .split("")
+      .map((char) => {
+        if (/[A-Z]/.test(char)) {
+          return `Capital ${char}`;
+        } else if (/[a-z]/.test(char)) {
+          return `Small ${char.toUpperCase()}`;
+        } else if (/[0-9]/.test(char)) {
+          return `Number ${char}`;
+        }
+        return char;
+      })
+      .join(". ") + ".";
+  };
+
   const speakCaptcha = () => {
-    if ("speechSynthesis" in window && captchaCode) {
+    if (!("speechSynthesis" in window) || !captchaCode) return;
+
+    if (isSpeaking) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(captchaCode.split("").join(" "));
-      utterance.rate = 0.8;
-      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(false);
+      return;
     }
+
+    window.speechSynthesis.cancel();
+    const spokenText = formatCaptchaForSpeech(captchaCode);
+    const utterance = new SpeechSynthesisUtterance(spokenText);
+    utterance.rate = 0.8;
+    utterance.pitch = 1.0;
+    utterance.lang = "en-US";
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   return (
@@ -122,7 +170,11 @@ export const CaptchaWidget: React.FC<CaptchaWidgetProps> = ({ onVerify }) => {
         <span className="flex items-center gap-1 font-semibold text-slate-300">
           <ShieldCheck className="w-3.5 h-3.5 text-[#2997ff]" /> CAPTCHA
         </span>
-        {isVerified ? (
+        {isSpeaking ? (
+          <span className="text-[#2997ff] font-medium flex items-center gap-1 text-[10px] animate-pulse">
+            Speaking case...
+          </span>
+        ) : isVerified ? (
           <span className="text-emerald-400 font-bold flex items-center gap-1 text-[10px]">
             <CheckCircle2 className="w-3 h-3" /> Verified
           </span>
@@ -153,10 +205,15 @@ export const CaptchaWidget: React.FC<CaptchaWidgetProps> = ({ onVerify }) => {
         <button
           type="button"
           onClick={speakCaptcha}
-          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition shrink-0"
-          title="Play audio"
+          className={`p-1.5 rounded-lg border transition shrink-0 ${
+            isSpeaking
+              ? "bg-[#2997ff]/20 border-[#2997ff]/50 text-[#2997ff] animate-pulse"
+              : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-400 hover:text-white"
+          }`}
+          title={isSpeaking ? "Stop audio" : "Play audio (speaks Capital, Small & Numbers)"}
+          aria-label={isSpeaking ? "Stop audio" : "Play audio (speaks Capital, Small & Numbers)"}
         >
-          <Volume2 className="w-3.5 h-3.5" />
+          {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
 
         {/* Input */}

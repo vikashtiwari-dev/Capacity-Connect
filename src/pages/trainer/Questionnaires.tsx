@@ -30,7 +30,7 @@ export const Questionnaires: React.FC = () => {
   const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "c6");
   const [assessmentTitle, setAssessmentTitle] = useState("");
   const [duration, setDuration] = useState(15);
-  const [passingScore, setPassingScore] = useState(70);
+  const [passingScore, setPassingScore] = useState(40);
   const [deadline, setDeadline] = useState(getDefaultDeadline());
   const [questions, setQuestions] = useState<Question[]>([]);
 

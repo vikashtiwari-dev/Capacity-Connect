@@ -1,21 +1,11 @@
 import type { User, Course } from "../types";
 
 /**
- * Checks if a user is a disposable dummy/demo account
- * (e.g. admin@capacityconnect.org, trainer@capacityconnect.org, trainee@capacityconnect.org)
+ * Demo accounts have been permanently purged from the platform.
+ * This helper returns false across all contexts.
  */
-export function isDemoAccount(user?: User | null | { email?: string; id?: string }): boolean {
-  if (!user) return false;
-  const email = (user.email || "").toLowerCase().trim();
-  const id = (user.id || "").toLowerCase().trim();
-  return (
-    email.endsWith("@capacityconnect.org") ||
-    email.includes("demo") ||
-    id.includes("demo") ||
-    id === "u-admin-demo" ||
-    id === "u-trainer-demo" ||
-    id === "u-trainee-demo"
-  );
+export function isDemoAccount(_user?: User | null | { email?: string; id?: string }): boolean {
+  return false;
 }
 
 /**
@@ -36,15 +26,11 @@ export const CORE_PRODUCTION_COURSE_IDS = [
 ];
 
 /**
- * Determines if a course is a production course that cannot be deleted or disrupted by demo users
+ * Determines if a course is a core production course protected from accidental deletion
  */
 export function isProtectedProductionCourse(course?: Course | { id: string; trainerId?: string } | null): boolean {
   if (!course) return false;
-  if (CORE_PRODUCTION_COURSE_IDS.includes(course.id)) return true;
-  if (course.trainerId && !course.trainerId.includes("demo")) {
-    return true;
-  }
-  return false;
+  return CORE_PRODUCTION_COURSE_IDS.includes(course.id);
 }
 
 /**
@@ -53,13 +39,12 @@ export function isProtectedProductionCourse(course?: Course | { id: string; trai
 export const PRIMARY_ADMIN_EMAIL = "vkt052005@gmail.com";
 
 /**
- * Checks if a user is an authentic Real Administrator (e.g. vkt052005@gmail.com)
- * and NOT a disposable demo/dummy admin account.
+ * Checks if a user is an authentic Platform Administrator
  */
 export function isRealAdmin(user?: User | null | { email?: string; role?: string; id?: string }): boolean {
   if (!user) return false;
   const email = (user.email || "").toLowerCase().trim();
   const id = (user.id || "").toLowerCase().trim();
   if (email === PRIMARY_ADMIN_EMAIL || id === "u-admin-official") return true;
-  return user.role === "admin" && !isDemoAccount(user);
+  return user.role === "admin";
 }

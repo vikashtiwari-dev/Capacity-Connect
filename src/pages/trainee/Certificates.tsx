@@ -41,7 +41,7 @@ export const Certificates: React.FC = () => {
             <Award className="w-12 h-12 text-slate-500 mx-auto" />
             <h3 className="text-sm font-bold text-white">No Certificates Earned Yet</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
-              Complete your enrolled learning modules and score ≥70% on proctored assessments to unlock your digitally signed, tamper-evident certificates.
+              Complete your enrolled learning modules and score ≥40% on proctored assessments to unlock your digitally signed, tamper-evident certificates.
             </p>
             <Link to="/trainee/assessments" className="apple-btn-primary text-xs px-4 py-2 inline-flex items-center gap-1.5 font-semibold">
               View MCQ Assessments →

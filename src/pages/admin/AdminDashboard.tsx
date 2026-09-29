@@ -13,7 +13,7 @@ import { useAppStore } from "../../store/appStore";
 import { useAuditStore } from "../../store/auditStore";
 import { useNotificationsStore } from "../../store/notificationsStore";
 import { useAuthStore } from "../../store/authStore";
-import { isDemoAccount, isRealAdmin, PRIMARY_ADMIN_EMAIL } from "../../utils/demoMode";
+import { isRealAdmin, PRIMARY_ADMIN_EMAIL } from "../../utils/demoMode";
 
 export const AdminDashboard: React.FC = () => {
   const { currentUser } = useAuthStore();
@@ -143,13 +143,13 @@ export const AdminDashboard: React.FC = () => {
                     >
                       Preview
                     </Link>
-                    {isDemoAccount(currentUser) ? (
+                    {!isRealAdmin(currentUser) ? (
                       <button
                         type="button"
                         onClick={() => {
                           addToast({
                             title: "Real Admin Verification Required",
-                            message: `Action Restricted in Demo Mode. Course submissions must be verified and approved by the Primary Platform Admin (${PRIMARY_ADMIN_EMAIL}).`,
+                            message: `Course verification & publishing is strictly restricted to the Primary Platform Admin (${PRIMARY_ADMIN_EMAIL}).`,
                             type: "warning"
                           });
                         }}
