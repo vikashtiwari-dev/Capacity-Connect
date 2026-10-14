@@ -1,5 +1,6 @@
 import React, { useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { purgeLocalDeviceData } from "./utils/purgeLocalStorage";
 import { useAuthStore } from "./store/authStore";
 import { useNotificationsStore } from "./store/notificationsStore";
@@ -275,6 +276,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
