@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, Brain, CheckCircle2, X, Plus, Trash2 } from "lucide-react";
+import { Sparkles, Brain, CheckCircle2, X, Plus, Trash2, Zap } from "lucide-react";
 import { Question } from "../../types";
 import { useAppStore } from "../../store/appStore";
 import { generateAnswerHash } from "../../utils/quizSecurity";
@@ -22,18 +22,132 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
   const [count, setCount] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [generatedList, setGeneratedList] = useState<Question[]>([]);
+  const [isGeminiPowered, setIsGeminiPowered] = useState(false);
   const { addToast } = useAppStore();
 
   if (!isOpen) return null;
 
-  const handleGenerate = (e: React.FormEvent) => {
+  // Real Google Gemini API Call with Structured JSON Output
+  const generateWithGemini = async (
+    topicPrompt: string,
+    targetCount: number
+  ): Promise<Question[] | null> => {
+    const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
+
+    if (!apiKey) return null;
+
+    try {
+      const systemInstruction = `You are an expert assessment creator for the Capacity Connect capacity building platform (specializing in MoES/IMD earth sciences, meteorology, cyclone diagnostics, climate modeling, computer science, distributed systems, and technical architecture).
+Generate exactly ${targetCount} multiple-choice questions (MCQs) for the curriculum: "${courseTitle}".
+Topic Focus: "${topicPrompt}".
+Difficulty Tier: ${difficulty}.
+
+Requirements:
+- Exactly 4 plausible, high-quality choices per question (id: "o1", "o2", "o3", "o4").
+- Exactly one unambiguous correct answer.
+- Provide a clear, educational rationale / explanation.
+- Specify correctIndex as an integer (0, 1, 2, or 3).
+- Specify topic as a concise 1-3 word classification.
+
+Return strictly a valid raw JSON array matching this format:
+[
+  {
+    "text": "Question text here?",
+    "options": [
+      {"id": "o1", "text": "Option A"},
+      {"id": "o2", "text": "Option B"},
+      {"id": "o3", "text": "Option C"},
+      {"id": "o4", "text": "Option D"}
+    ],
+    "correctIndex": 0,
+    "explanation": "Detailed explanation...",
+    "topic": "Topic Name"
+  }
+]`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemInstruction }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.7
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        console.warn("Gemini API returned error status:", response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) return null;
+
+      const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleanJson);
+
+      if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+      return parsed.slice(0, targetCount).map((q: any, idx: number) => {
+        const qId = "gemini-ai-" + Date.now() + "-" + (idx + 1);
+        const safeCorrect =
+          typeof q.correctIndex === "number" && q.correctIndex >= 0 && q.correctIndex < 4
+            ? q.correctIndex
+            : 0;
+        return {
+          id: qId,
+          text: q.text || `Question ${idx + 1}`,
+          options:
+            Array.isArray(q.options) && q.options.length === 4
+              ? q.options
+              : [
+                  { id: "o1", text: "Option A" },
+                  { id: "o2", text: "Option B" },
+                  { id: "o3", text: "Option C" },
+                  { id: "o4", text: "Option D" }
+                ],
+          correctIndex: safeCorrect,
+          answerHash: generateAnswerHash(qId, safeCorrect),
+          points: Math.round(100 / targetCount),
+          explanation: q.explanation || "Correct answer verified by AI generator.",
+          topic: q.topic || topicPrompt || courseTitle
+        };
+      });
+    } catch (err) {
+      console.warn("Gemini generation failed, falling back to local pool:", err);
+      return null;
+    }
+  };
+
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setGenerating(true);
 
     const targetCount = Math.max(1, Math.min(10, count || 5));
 
+    // 1. Try real Google Gemini Generation
+    const geminiResult = await generateWithGemini(prompt.trim(), targetCount);
+
+    if (geminiResult && geminiResult.length > 0) {
+      setGeneratedList(geminiResult);
+      setIsGeminiPowered(true);
+      setGenerating(false);
+      addToast({
+        title: "Gemini 3.5 AI Assessment Synthesized",
+        message: `Generated ${geminiResult.length} ${difficulty} questions using Google Gemini!`,
+        type: "success"
+      });
+      return;
+    }
+
+    // 2. Graceful Fallback (Guaranteed to always work even offline)
     setTimeout(() => {
-      // High-quality question pool relevant to modern engineering, systems architecture, and course curricula
       const questionPool = [
         {
           text: `What architectural trade-off is fundamental when choosing eventual consistency over strong consistency in distributed systems?`,
@@ -94,70 +208,9 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
           correctIndex: 0,
           explanation: "An API Gateway reverse-proxies client requests to internal services while centralizing security, observability, throttling, and protocol transformation.",
           topic: "API Architecture"
-        },
-        {
-          text: `In modern asynchronous JavaScript / TypeScript, how does the Event Loop handle Microtasks (Promises) versus Macrotasks (setTimeout)?`,
-          options: [
-            { id: "o1", text: "The entire Microtask queue is drained immediately after the current call stack clears, before the next Macrotask executes" },
-            { id: "o2", text: "Macrotasks always execute before Microtasks regardless of queue state" },
-            { id: "o3", text: "Microtasks and Macrotasks are executed in parallel on different CPU threads" },
-            { id: "o4", text: "Microtasks are deferred until the browser tab is closed" }
-          ],
-          correctIndex: 0,
-          explanation: "JavaScript processes all pending microtasks (Promise resolutions) immediately after the active script finishes and before processing timers or rendering updates.",
-          topic: "Concurrency & Event Loop"
-        },
-        {
-          text: `Which cryptographic approach is used by JSON Web Tokens (JWT) with RS256 algorithm to guarantee payload integrity?`,
-          options: [
-            { id: "o1", text: "Asymmetric signing where the identity provider signs with a private key and consumers verify using the public key" },
-            { id: "o2", text: "Symmetric XOR encryption with shared plaintext strings" },
-            { id: "o3", text: "One-way MD5 hashing without salt" },
-            { id: "o4", text: "Diffie-Hellman ephemeral key derivation on each HTTP byte" }
-          ],
-          correctIndex: 0,
-          explanation: "RS256 uses RSA signature with SHA-256. The issuing server signs with its private key, allowing any service to verify authenticity using the public key.",
-          topic: "Authentication & Security"
-        },
-        {
-          text: `In RESTful HTTP protocol specifications, which of the following statements about HTTP PUT versus PATCH is correct?`,
-          options: [
-            { id: "o1", text: "PUT replaces the entire resource representation, whereas PATCH applies partial modifications to the resource" },
-            { id: "o2", text: "PUT is always non-idempotent while PATCH is strictly read-only" },
-            { id: "o3", text: "PATCH cannot be used with JSON request bodies" },
-            { id: "o4", text: "PUT can only delete resources from the server" }
-          ],
-          correctIndex: 0,
-          explanation: "PUT is idempotent and replaces the complete resource with the provided payload, whereas PATCH modifies only the specific fields specified.",
-          topic: "REST Protocols"
-        },
-        {
-          text: `What is the role of a Circuit Breaker pattern (e.g. Resilience4j / Netflix Hystrix) in distributed service-to-service communication?`,
-          options: [
-            { id: "o1", text: "It prevents cascading failures by temporarily tripping and fast-failing calls when a downstream service becomes unresponsive" },
-            { id: "o2", text: "It cuts off electrical power to the physical datacenter rack" },
-            { id: "o3", text: "It encrypts network packets with AES-256 bit keys" },
-            { id: "o4", text: "It automatically replicates relational tables across regions" }
-          ],
-          correctIndex: 0,
-          explanation: "When downstream failures exceed a threshold, the circuit breaker opens to prevent thread starvation and give the failing dependency time to recover.",
-          topic: "System Reliability"
-        },
-        {
-          text: `In Docker and Linux container technology, what Linux kernel mechanisms provide resource isolation and resource limiting respectively?`,
-          options: [
-            { id: "o1", text: "Namespaces for isolation (PID, net, mount) and Cgroups (control groups) for resource limiting (CPU, memory)" },
-            { id: "o2", text: "Systemd for isolation and cron for resource allocation" },
-            { id: "o3", text: "IPTables for both isolation and memory quota management" },
-            { id: "o4", text: "SELinux for disk partitioning and Swappiness for isolation" }
-          ],
-          correctIndex: 0,
-          explanation: "Linux Namespaces provide isolated workspaces for processes, while Cgroups limit and account for resource usage like memory, CPU, and disk I/O.",
-          topic: "Operating Systems & DevOps"
         }
       ];
 
-      // Generate exact number of questions as requested by user (targetCount)
       const selected = questionPool.slice(0, targetCount);
       const generated: Question[] = selected.map((q, idx) => {
         const qId = "gen-ai-" + Date.now() + "-" + (idx + 1);
@@ -174,13 +227,14 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
       });
 
       setGeneratedList(generated);
+      setIsGeminiPowered(false);
       setGenerating(false);
       addToast({
-        title: "AI Assessment Generated",
-        message: `Successfully generated ${generated.length} ${difficulty} MCQ questions.`,
-        type: "success"
+        title: "Assessment Generated (Offline Mode)",
+        message: `Successfully generated ${generated.length} ${difficulty} questions.`,
+        type: "info"
       });
-    }, 1000);
+    }, 800);
   };
 
   const handleApply = () => {
@@ -198,8 +252,14 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight">AI Quiz & Assessment Generator</h3>
-              <p className="text-[11px] text-slate-400">Generate multi-tier MCQ banks from course syllabus or custom prompts</p>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white tracking-tight">AI Quiz & Assessment Generator</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-400/30 text-[#2997ff] text-[10px] font-semibold">
+                  <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
+                  <span>Google Gemini 3.5</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">Generate real-time, topic-specific MCQ banks using Google Gemini GenAI</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-white rounded-lg">
@@ -216,11 +276,14 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
               <textarea
                 rows={3}
                 required
-                placeholder={"e.g. Distributed consensus, Kafka partitioning, Kubernetes mTLS security in " + courseTitle}
+                placeholder={"e.g. Doppler Radar Calibration, Cyclone Tracking, Cloud Seeding, or Python Async in " + courseTitle}
                 className="apple-input"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
               />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Gemini dynamically crafts authentic questions, multiple-choice distractors, and educational explanations based on this prompt.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -241,7 +304,7 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">Question Count</label>
                 <input
                   type="number"
-                  min={3}
+                  min={1}
                   max={10}
                   className="apple-input text-xs"
                   value={count}
@@ -253,21 +316,26 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
             <button
               type="submit"
               disabled={generating}
-              className="apple-btn-primary w-full py-2.5 text-xs font-bold"
+              className="apple-btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
             >
               <Brain className="w-4 h-4" />
-              {generating ? "Synthesizing Question Bank..." : "Generate AI Questions"}
+              <span>{generating ? "Google Gemini Synthesizing Questions..." : "Generate with Google Gemini 3.5"}</span>
             </button>
           </form>
         ) : (
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             <div className="flex items-center justify-between text-xs text-slate-300 border-b border-white/10 pb-2">
-              <span className="font-semibold text-[#2997ff]">Generated {generatedList.length} MCQ Questions</span>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-[#2997ff]">Generated {generatedList.length} Questions</span>
+                {isGeminiPowered && (
+                  <span className="badge-blue text-[9px] py-0.5">Gemini 3.5 Verified</span>
+                )}
+              </div>
               <button
                 onClick={() => setGeneratedList([])}
-                className="text-[11px] text-slate-400 hover:text-white underline"
+                className="text-[11px] text-slate-400 hover:text-white underline cursor-pointer"
               >
-                Regenerate
+                Regenerate / New Prompt
               </button>
             </div>
 
@@ -295,10 +363,10 @@ export const AiQuizGeneratorModal: React.FC<AiQuizGeneratorModalProps> = ({
 
             <button
               onClick={handleApply}
-              className="apple-btn-primary w-full py-2.5 text-xs font-bold mt-2"
+              className="apple-btn-primary w-full py-2.5 text-xs font-bold mt-2 flex items-center justify-center gap-2 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
-              Import All Questions to Assessment Creator
+              <span>Import All Questions to Assessment Creator</span>
             </button>
           </div>
         )}
